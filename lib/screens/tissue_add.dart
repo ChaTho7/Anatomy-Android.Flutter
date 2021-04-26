@@ -24,7 +24,7 @@ class TissueAddState extends State {
         title: Text("Tissue Add"),
       ),
       body: Padding(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.all(25),
         child: Column(
           children: <Widget>[
             buildNameField(),
