@@ -29,6 +29,8 @@ class Tissue {
     if (id != null) {
       map["id"] = id;
     }
+
+    return map;
   }
 
   Tissue.fromObject(dynamic o) {

@@ -69,14 +69,18 @@ class TissueAddState extends State {
   buildSaveButton() {
     return TextButton(
       child: Text("Add"),
-      onPressed: (){
+      onPressed: () {
         addTissue();
       },
     );
   }
 
-  void addTissue() async{
-    await dbHelper.insert(Tissue(name:txtName.text,sort:txtSort.text,gender:txtGender.text,region:txtRegion.text));
-    Navigator.pop(context,true);
+  void addTissue() async {
+    await dbHelper.insert(Tissue(
+        name: txtName.text,
+        sort: txtSort.text,
+        gender: txtGender.text,
+        region: txtRegion.text));
+    Navigator.pop(context, true);
   }
 }

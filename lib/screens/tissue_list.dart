@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite_app/data/dbHelper.dart';
 import 'package:sqflite_app/models/Tissue.dart';
 import 'package:sqflite_app/screens/tissue_add.dart';
+import 'package:sqflite_app/screens/tissue_detail.dart';
 
 class TissueList extends StatefulWidget {
   @override
@@ -17,10 +18,7 @@ class _TissueListState extends State {
 
   @override
   void initState() {
-    var tissuesFuture = dbHelper.getTissues();
-    tissuesFuture.then((data) {
-      this.tissues = data;
-    });
+    getTissues();
   }
 
   @override
@@ -31,7 +29,7 @@ class _TissueListState extends State {
       ),
       body: buildTissueList(),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){
+        onPressed: () {
           goToTissueAdd();
         },
         child: Icon(Icons.add),
@@ -54,19 +52,42 @@ class _TissueListState extends State {
             ),
             title: Text(this.tissues[position].name),
             subtitle: Text(this.tissues[position].sort),
-            onTap: () {},
+            onTap: () {
+              goToDetail(this.tissues[position]);
+            },
           ),
         );
       },
     );
   }
 
-  void goToTissueAdd() async{
-    await Navigator.push(context, MaterialPageRoute(builder: (context)=>TissueAdd()));
+  void goToTissueAdd() async {
+    bool result = await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => TissueAdd()));
+    if (result != null) {
+      if (result) {
+        getTissues();
+      }
+    }
   }
-  
-  
-  
-  
-  
+
+  void getTissues() async {
+    var tissuesFuture = dbHelper.getTissues();
+    tissuesFuture.then((data) {
+      setState(() {
+        this.tissues = data;
+        tissueCount = data.length;
+      });
+    });
+  }
+
+  void goToDetail(Tissue tissue) async {
+    bool result = await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => TissueDetail(tissue)));
+    if (result != null) {
+      if (result) {
+        getTissues();
+      }
+    }
+  }
 }
