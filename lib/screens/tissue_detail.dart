@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/data/dbHelper.dart';
 import 'package:sqflite_app/models/Tissue.dart';
 
 class TissueDetail extends StatefulWidget {
@@ -19,7 +18,6 @@ class _TissueDetailState extends State {
   _TissueDetailState(this.tissue);
 
   Tissue tissue;
-  var dbHelper = DbHelper();
   var txtName = TextEditingController();
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
@@ -28,8 +26,8 @@ class _TissueDetailState extends State {
   @override
   void initState() {
     txtName.text = tissue.name;
-    txtRegion.text = tissue.region;
-    txtSort.text = tissue.sort;
+    txtRegion.text = (tissue.regionId).toString();
+    txtSort.text = (tissue.sortId).toString();
     txtGender.text = tissue.gender;
     super.initState();
   }
@@ -38,7 +36,9 @@ class _TissueDetailState extends State {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Tissue detail : ${tissue.name}"),
+        backgroundColor: Colors.black87,
+        centerTitle: true,
+        title: Text("Tissue Detail : ${tissue.name}"),
         actions: <Widget>[
           PopupMenuButton<Options>(
             onSelected: selectProcess,
@@ -104,16 +104,16 @@ class _TissueDetailState extends State {
   void selectProcess(Options value) async {
     switch (value) {
       case Options.delete:
-        await dbHelper.delete(tissue.id);
+        //await dbHelper.delete(tissue.id);
         Navigator.pop(context, true);
         break;
       case Options.update:
-        await dbHelper.update(Tissue.withId(
+        /*await dbHelper.update(Tissue.withId(
             id: tissue.id,
             name: txtName.text,
             sort: txtSort.text,
             region: txtRegion.text,
-            gender: txtGender.text));
+            gender: txtGender.text));*/
         Navigator.pop(context, true);
         break;
       default:

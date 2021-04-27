@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/data/dbHelper.dart';
+import 'package:sqflite_app/data/api/tissue_api.dart';
 import 'package:sqflite_app/models/Tissue.dart';
+import 'package:sqflite_app/models/response_model.dart';
 import 'package:sqflite_app/screens/tissue_add.dart';
 import 'package:sqflite_app/screens/tissue_detail.dart';
 
@@ -12,7 +14,6 @@ class TissueList extends StatefulWidget {
 }
 
 class _TissueListState extends State {
-  DbHelper dbHelper = DbHelper();
   List<Tissue> tissues;
   int tissueCount = 0;
 
@@ -26,14 +27,17 @@ class _TissueListState extends State {
     return Scaffold(
       appBar: AppBar(
         title: Text("Tissue List"),
+        backgroundColor: Colors.black87,
+        centerTitle: true,
       ),
       body: buildTissueList(),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black87,
         onPressed: () {
           goToTissueAdd();
         },
         child: Icon(Icons.add),
-        tooltip: "Add new tissue",
+        tooltip: "Add New Tissue",
       ),
     );
   }
@@ -43,7 +47,7 @@ class _TissueListState extends State {
       itemCount: tissueCount,
       itemBuilder: (BuildContext context, int position) {
         return Card(
-          color: Colors.blueGrey,
+          color: Colors.black54,
           elevation: 2,
           child: ListTile(
             leading: CircleAvatar(
@@ -51,7 +55,7 @@ class _TissueListState extends State {
               child: Text("a"),
             ),
             title: Text(this.tissues[position].name),
-            subtitle: Text(this.tissues[position].sort),
+            subtitle: Text((this.tissues[position].sortId).toString(),style: TextStyle(color: Colors.white38),),
             onTap: () {
               goToDetail(this.tissues[position]);
             },
@@ -72,11 +76,13 @@ class _TissueListState extends State {
   }
 
   void getTissues() async {
-    var tissuesFuture = dbHelper.getTissues();
-    tissuesFuture.then((data) {
+    TissueApi.getTissues().then((response) {
       setState(() {
-        this.tissues = data;
-        tissueCount = data.length;
+        var jsonMap = json.decode(response.body);
+        ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
+        this.tissues = responseModel.data;
+        this.tissueCount=this.tissues.length;
+        //getTissueWidgets();
       });
     });
   }

@@ -1,7 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/data/dbHelper.dart';
-import 'package:sqflite_app/models/Tissue.dart';
 
 class TissueAdd extends StatefulWidget {
   @override
@@ -11,7 +9,6 @@ class TissueAdd extends StatefulWidget {
 }
 
 class TissueAddState extends State {
-  var dbHelper = DbHelper();
   var txtName = TextEditingController();
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
@@ -21,6 +18,8 @@ class TissueAddState extends State {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black87,
+        centerTitle: true,
         title: Text("Tissue Add"),
       ),
       body: Padding(
@@ -68,7 +67,8 @@ class TissueAddState extends State {
 
   buildSaveButton() {
     return TextButton(
-      child: Text("Add"),
+      style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.black54)),
+      child: Text("Add",style: TextStyle(color: Colors.white),),
       onPressed: () {
         addTissue();
       },
@@ -76,11 +76,11 @@ class TissueAddState extends State {
   }
 
   void addTissue() async {
-    await dbHelper.insert(Tissue(
+    /*await dbHelper.insert(Tissue(
         name: txtName.text,
         sort: txtSort.text,
         gender: txtGender.text,
-        region: txtRegion.text));
+        region: txtRegion.text));*/
     Navigator.pop(context, true);
   }
 }

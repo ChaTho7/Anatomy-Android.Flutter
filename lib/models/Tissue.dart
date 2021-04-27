@@ -1,43 +1,29 @@
 class Tissue {
   int id;
+  int sortId;
+  int regionId;
   String name;
-  String sort;
-  String region;
   String gender;
 
-  Tissue.withId({
-    this.id,
-    this.name,
-    this.sort,
-    this.region,
-    this.gender,
-  }) {}
+  Tissue({this.id, this.name, this.regionId, this.sortId, this.gender});
 
-  Tissue({
-    this.name,
-    this.sort,
-    this.region,
-    this.gender,
-  }) {}
-
-  Map<String, dynamic> toMap() {
-    var map = Map<String, dynamic>();
-    map["name"] = name;
-    map["sort"] = sort;
-    map["region"] = region;
-    map["gender"] = gender;
-    if (id != null) {
-      map["id"] = id;
-    }
-
-    return map;
+  factory Tissue.fromJson(Map<String, dynamic> json) {
+    return Tissue(
+      id: json["id"],
+      name: json["name"],
+      regionId: json["regionId"],
+      sortId: json["sortId"],
+      gender: json["gender"],
+    );
   }
 
-  Tissue.fromObject(dynamic o) {
-    this.id = int.tryParse(o["id"]);
-    this.name = o["name"];
-    this.sort = o["sort"];
-    this.region = o["region"];
-    this.gender = o["gender"];
+  Map toJson() {
+    return {
+      "id": id,
+      "name": name,
+      "regionId": regionId,
+      "sortId": sortId,
+      "gender": gender
+    };
   }
 }
