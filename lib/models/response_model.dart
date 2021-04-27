@@ -1,4 +1,4 @@
-import 'package:sqflite_app/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/models/Tissue.dart';
 
 class ResponseModel {
   List<Tissue> data;

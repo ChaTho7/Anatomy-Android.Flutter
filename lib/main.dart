@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/screens/tissue_list.dart';
+import 'package:ChaTho_Anatomy/screens/tissue_list.dart';
 
 void main() {
   runApp(MyApp());

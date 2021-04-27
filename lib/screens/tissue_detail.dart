@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/models/Tissue.dart';
 
 class TissueDetail extends StatefulWidget {
   TissueDetail(this.tissue);

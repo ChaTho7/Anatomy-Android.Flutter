@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:sqflite_app/data/api/tissue_api.dart';
-import 'package:sqflite_app/models/Tissue.dart';
-import 'package:sqflite_app/models/response_model.dart';
-import 'package:sqflite_app/screens/tissue_add.dart';
-import 'package:sqflite_app/screens/tissue_detail.dart';
+import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
+import 'package:ChaTho_Anatomy/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/models/response_model.dart';
+import 'package:ChaTho_Anatomy/screens/tissue_add.dart';
+import 'package:ChaTho_Anatomy/screens/tissue_detail.dart';
 
 class TissueList extends StatefulWidget {
   @override
