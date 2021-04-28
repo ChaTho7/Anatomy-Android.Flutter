@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:flutter/material.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
-import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:ChaTho_Anatomy/screens/tissue_add.dart';
 import 'package:ChaTho_Anatomy/screens/tissue_detail.dart';
@@ -14,12 +14,12 @@ class TissueList extends StatefulWidget {
 }
 
 class _TissueListState extends State {
-  List<Tissue> tissues;
+  List<TissueDetails> tissueDetails;
   int tissueCount = 0;
 
   @override
   void initState() {
-    getTissues();
+    getTissueDetails();
   }
 
   @override
@@ -42,27 +42,29 @@ class _TissueListState extends State {
     );
   }
 
-  ListView buildTissueList() {
-    return ListView.builder(
-      itemCount: tissueCount,
-      itemBuilder: (BuildContext context, int position) {
-        return Card(
-          color: Colors.black54,
-          elevation: 2,
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.black38,
-              child: Text("a"),
+  buildTissueList() {
+    return GridView.count(
+        crossAxisCount: 2,
+        children: List.generate(tissueDetails.length, (index) {
+          return Card(
+            color: Colors.black54,
+            elevation: 2,
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.black38,
+                child: Text((this.tissueDetails[index].id).toString()),
+              ),
+              title: Text(this.tissueDetails[index].name),
+              subtitle: Text(
+                this.tissueDetails[index].sort,
+                style: TextStyle(color: Colors.white38),
+              ),
+              onTap: () {
+                goToDetail(this.tissueDetails[index]);
+              },
             ),
-            title: Text(this.tissues[position].name),
-            subtitle: Text((this.tissues[position].sortId).toString(),style: TextStyle(color: Colors.white38),),
-            onTap: () {
-              goToDetail(this.tissues[position]);
-            },
-          ),
-        );
-      },
-    );
+          );
+        }));
   }
 
   void goToTissueAdd() async {
@@ -70,29 +72,29 @@ class _TissueListState extends State {
         context, MaterialPageRoute(builder: (context) => TissueAdd()));
     if (result != null) {
       if (result) {
-        getTissues();
+        getTissueDetails();
       }
     }
   }
 
-  void getTissues() async {
-    TissueApi.getTissues().then((response) {
+  void getTissueDetails() async {
+    TissueApi.getTissueDetails().then((response) {
       setState(() {
         var jsonMap = json.decode(response.body);
         ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-        this.tissues = responseModel.data;
-        this.tissueCount=this.tissues.length;
-        //getTissueWidgets();
+        var list=responseModel.data;
+        this.tissueDetails = list.map((e) => TissueDetails.fromJson(e)).toList();
+        this.tissueCount = this.tissueDetails.length;
       });
     });
   }
 
-  void goToDetail(Tissue tissue) async {
+  void goToDetail(TissueDetails tissueDetails) async {
     bool result = await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueDetail(tissue)));
+        context, MaterialPageRoute(builder: (context) => TissueDetail(tissueDetails)));
     if (result != null) {
       if (result) {
-        getTissues();
+        getTissueDetails();
       }
     }
   }

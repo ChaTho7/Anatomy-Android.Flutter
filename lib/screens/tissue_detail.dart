@@ -1,34 +1,41 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
+import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
+import 'package:ChaTho_Anatomy/models/response_model.dart';
+import 'package:flutter/material.dart';
 
 class TissueDetail extends StatefulWidget {
-  TissueDetail(this.tissue);
+  TissueDetail(this.tissueDetail);
 
-  Tissue tissue;
+  TissueDetails tissueDetail;
 
   @override
   State<StatefulWidget> createState() {
-    return _TissueDetailState(tissue);
+    return _TissueDetailState();
   }
 }
 
 enum Options { delete, update }
 
-class _TissueDetailState extends State {
-  _TissueDetailState(this.tissue);
+class _TissueDetailState extends State<TissueDetail> {
+  //_TissueDetailState(this.tissue);
 
-  Tissue tissue;
+  //Tissue tissue;
   var txtName = TextEditingController();
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
   var txtGender = TextEditingController();
+  var txtOrigin = TextEditingController();
 
   @override
   void initState() {
-    txtName.text = tissue.name;
-    txtRegion.text = (tissue.regionId).toString();
-    txtSort.text = (tissue.sortId).toString();
-    txtGender.text = tissue.gender;
+    txtName.text = widget.tissueDetail.name;
+    txtRegion.text = widget.tissueDetail.region;
+    txtSort.text = widget.tissueDetail.sort;
+    txtGender.text = widget.tissueDetail.gender;
+    txtOrigin.text = widget.tissueDetail.origin;
     super.initState();
   }
 
@@ -38,7 +45,7 @@ class _TissueDetailState extends State {
       appBar: AppBar(
         backgroundColor: Colors.black87,
         centerTitle: true,
-        title: Text("Tissue Detail : ${tissue.name}"),
+        title: Text("Tissue Detail : ${widget.tissueDetail.name}"),
         actions: <Widget>[
           PopupMenuButton<Options>(
             onSelected: selectProcess,
@@ -101,6 +108,13 @@ class _TissueDetailState extends State {
     );
   }
 
+  TextField buildOriginField() {
+    return TextField(
+      decoration: InputDecoration(labelText: "Tissue Origin"),
+      controller: txtOrigin,
+    );
+  }
+
   void selectProcess(Options value) async {
     switch (value) {
       case Options.delete:
@@ -108,12 +122,21 @@ class _TissueDetailState extends State {
         Navigator.pop(context, true);
         break;
       case Options.update:
-        /*await dbHelper.update(Tissue.withId(
-            id: tissue.id,
+        List<Tissue> updatedTissue;
+        TissueApi.getTissueById(widget.tissueDetail.id).then((response) {
+          setState(() {
+            var jsonMap = json.decode(response.body);
+            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
+            var list=responseModel.data;
+             updatedTissue= list.map((e) => Tissue.fromJson(e)).toList();
+          });
+        });
+        await TissueApi.updateTissue(Tissue(
+            id: widget.tissueDetail.id,
             name: txtName.text,
-            sort: txtSort.text,
-            region: txtRegion.text,
-            gender: txtGender.text));*/
+            sortId: updatedTissue[0].sortId,
+            regionId: updatedTissue[0].regionId,
+            gender: txtGender.text));
         Navigator.pop(context, true);
         break;
       default:

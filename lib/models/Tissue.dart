@@ -19,7 +19,6 @@ class Tissue {
 
   Map toJson() {
     return {
-      "id": id,
       "name": name,
       "regionId": regionId,
       "sortId": sortId,
