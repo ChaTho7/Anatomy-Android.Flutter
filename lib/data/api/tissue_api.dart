@@ -31,6 +31,6 @@ class TissueApi {
     var url = Uri.parse(apiUrl + 'update');
     return await http.put(url,
         headers: {"Content-type": "application/json"},
-        body: json.encode(tissue.toJson()));
+        body: json.encode(tissue.toJsonWithId()));
   }
 }

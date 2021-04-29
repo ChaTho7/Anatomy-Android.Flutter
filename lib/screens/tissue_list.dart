@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:flutter/material.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
@@ -15,6 +16,7 @@ class TissueList extends StatefulWidget {
 
 class _TissueListState extends State {
   List<TissueDetails> tissueDetails;
+  List<Tissue> detailTissue;
   int tissueCount = 0;
 
   @override
@@ -90,12 +92,23 @@ class _TissueListState extends State {
   }
 
   void goToDetail(TissueDetails tissueDetails) async {
+    await getTissueById(tissueDetails.id);
     bool result = await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueDetail(tissueDetails)));
+        context, MaterialPageRoute(builder: (context) => TissueDetail(tissueDetails,detailTissue)));
     if (result != null) {
       if (result) {
         getTissueDetails();
       }
     }
+  }
+
+  Future getTissueById(int id) async{
+    await TissueApi.getTissueById(id).then((response) {
+      var jsonMap = json.decode(response.body);
+      List data = [jsonMap['data']];
+      ResponseModel responseModel = new ResponseModel(data: data);
+      var list = responseModel.data;
+      detailTissue = list.map((e) => Tissue.fromJson(e)).toList();
+    });
   }
 }

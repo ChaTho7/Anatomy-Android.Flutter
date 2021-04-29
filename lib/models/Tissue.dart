@@ -25,4 +25,14 @@ class Tissue {
       "gender": gender
     };
   }
+
+  Map toJsonWithId() {
+    return {
+      "id": id,
+      "name": name,
+      "regionId": regionId,
+      "sortId": sortId,
+      "gender": gender
+    };
+  }
 }

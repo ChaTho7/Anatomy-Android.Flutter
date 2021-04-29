@@ -16,9 +16,13 @@ class TissueAdd extends StatefulWidget {
   }
 }
 
-class TissueAddState extends State {
+class TissueAddState extends State<TissueAdd> {
   List<Region> regions;
   List<Sort> sorts;
+  List<String> genders = ["Male", "Female", ""];
+  var dropdownRegionValue = "1";
+  var dropdownSortValue = "1";
+  var dropdownGenderValue;
   var txtName = TextEditingController();
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
@@ -62,11 +66,9 @@ class TissueAddState extends State {
   }
 
   buildRegionField() {
-    var dropdownValue = "1";
-    txtRegion.text = "1";
     return DropdownButton<String>(
       isExpanded: true,
-      value: dropdownValue,
+      value: dropdownRegionValue,
       icon: const Icon(Icons.arrow_downward),
       iconSize: 24,
       elevation: 16,
@@ -77,13 +79,12 @@ class TissueAddState extends State {
       ),
       onChanged: (String newValue) {
         setState(() {
-          dropdownValue = newValue;
+          dropdownRegionValue = newValue;
           txtRegion.text = newValue;
-          print(txtRegion.text);
         });
       },
       items: regions
-          .map((e) => e.id.toString())
+          .map((r) => r.id.toString())
           .toList()
           .map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
@@ -98,11 +99,9 @@ class TissueAddState extends State {
   }
 
   buildSortField() {
-    var dropdownValue = "1";
-    txtSort.text = "1";
     return DropdownButton<String>(
       isExpanded: true,
-      value: dropdownValue,
+      value: dropdownSortValue,
       icon: const Icon(Icons.arrow_downward),
       iconSize: 24,
       elevation: 16,
@@ -113,13 +112,12 @@ class TissueAddState extends State {
       ),
       onChanged: (String newValue) {
         setState(() {
-          dropdownValue = newValue;
+          dropdownSortValue = newValue;
           txtSort.text = newValue;
-          print(txtSort.text);
         });
       },
       items: sorts
-          .map((e) => e.id.toString())
+          .map((s) => s.id.toString())
           .toList()
           .map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
@@ -133,10 +131,33 @@ class TissueAddState extends State {
     );
   }
 
-  TextField buildGenderField() {
-    return TextField(
-      decoration: InputDecoration(labelText: "Tissue Gender"),
-      controller: txtGender,
+  buildGenderField() {
+    return DropdownButton<String>(
+      isExpanded: true,
+      value: dropdownGenderValue,
+      icon: const Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          dropdownGenderValue = newValue;
+          txtGender.text = newValue;
+        });
+      },
+      items: genders
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+            value: value,
+            child: Center(
+              child: Text(value,
+              ),
+            ));
+      }).toList(),
     );
   }
 
@@ -159,7 +180,7 @@ class TissueAddState extends State {
         name: txtName.text,
         regionId: int.parse(txtRegion.text),
         sortId: int.parse(txtSort.text),
-        gender: txtGender.text);
+        gender: txtGender.text == "" ? null:txtGender.text);
     await TissueApi.addTissue(addedTissue);
     Navigator.pop(context, true);
   }

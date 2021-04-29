@@ -1,28 +1,42 @@
 import 'dart:convert';
 
+import 'package:ChaTho_Anatomy/data/api/region_api.dart';
+import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
+import 'package:ChaTho_Anatomy/models/Region.dart';
+import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:flutter/material.dart';
 
 class TissueDetail extends StatefulWidget {
-  TissueDetail(this.tissueDetail);
+  TissueDetail(this.tissueDetail,this.updatedTissue);
 
   TissueDetails tissueDetail;
+  List<Tissue> updatedTissue;
 
   @override
   State<StatefulWidget> createState() {
     return _TissueDetailState();
   }
+
+
 }
 
 enum Options { delete, update }
 
 class _TissueDetailState extends State<TissueDetail> {
-  //_TissueDetailState(this.tissue);
+  //_TissueDetailState();
 
-  //Tissue tissue;
+  List<Region> regions;
+  List<Sort> sorts;
+  List<String> genders = ["Male", "Female", ""];
+  List<String> origins = ["Endoderm", "Ektoderm", "Mezoderm"];
+  var dropdownGenderValue;
+  var dropdownOriginValue;
+  var dropdownRegionValue;
+  var dropdownSortValue;
   var txtName = TextEditingController();
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
@@ -31,11 +45,9 @@ class _TissueDetailState extends State<TissueDetail> {
 
   @override
   void initState() {
-    txtName.text = widget.tissueDetail.name;
-    txtRegion.text = widget.tissueDetail.region;
-    txtSort.text = widget.tissueDetail.sort;
-    txtGender.text = widget.tissueDetail.gender;
-    txtOrigin.text = widget.tissueDetail.origin;
+    getRegions();
+    getSorts();
+    setValues();
     super.initState();
   }
 
@@ -74,7 +86,8 @@ class _TissueDetailState extends State<TissueDetail> {
           buildNameField(),
           buildSortField(),
           buildRegionField(),
-          buildGenderField()
+          buildGenderField(),
+          buildOriginField()
         ],
       ),
     );
@@ -87,32 +100,164 @@ class _TissueDetailState extends State<TissueDetail> {
     );
   }
 
-  TextField buildRegionField() {
-    return TextField(
-      decoration: InputDecoration(labelText: "Tissue Region"),
-      controller: txtRegion,
+  buildRegionField() {
+    return DropdownButton<String>(
+      isExpanded: true,
+      value: dropdownRegionValue,
+      icon: const Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          dropdownRegionValue = newValue;
+          txtRegion.text = newValue;
+        });
+      },
+      items: regions
+          .map((r) => r.id.toString())
+          .toList()
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+            value: value,
+            child: Center(
+              child: Text(
+                regions.firstWhere((r) => r.id == int.parse(value)).name,
+              ),
+            ));
+      }).toList(),
     );
   }
 
-  TextField buildSortField() {
-    return TextField(
-      decoration: InputDecoration(labelText: "Tissue Sort"),
-      controller: txtSort,
+  buildSortField() {
+    return DropdownButton<String>(
+      isExpanded: true,
+      value: dropdownSortValue,
+      icon: const Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          dropdownSortValue = newValue;
+          txtSort.text = newValue;
+        });
+      },
+      items: sorts
+          .map((s) => s.id.toString())
+          .toList()
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+            value: value,
+            child: Center(
+              child: Text(
+                sorts.firstWhere((r) => r.id == int.parse(value)).name,
+              ),
+            ));
+      }).toList(),
     );
   }
 
-  TextField buildGenderField() {
-    return TextField(
-      decoration: InputDecoration(labelText: "Tissue Gender"),
-      controller: txtGender,
+  buildGenderField() {
+    return DropdownButton<String>(
+      isExpanded: true,
+      value: dropdownGenderValue,
+      icon: const Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          dropdownGenderValue = newValue;
+          txtGender.text = newValue;
+        });
+      },
+      items: genders.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+            value: value,
+            child: Center(
+              child: Text(
+                value,
+              ),
+            ));
+      }).toList(),
     );
   }
 
-  TextField buildOriginField() {
-    return TextField(
-      decoration: InputDecoration(labelText: "Tissue Origin"),
-      controller: txtOrigin,
+  buildOriginField() {
+    return DropdownButton<String>(
+      isExpanded: true,
+      value: dropdownOriginValue,
+      icon: const Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          dropdownOriginValue = newValue;
+          txtGender.text = newValue;
+        });
+      },
+      items: origins.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+            value: value,
+            child: Center(
+              child: Text(
+                value,
+              ),
+            ));
+      }).toList(),
     );
+  }
+
+  void getRegions() {
+    RegionApi.getRegions().then((response) => {
+          setState(() {
+            var jsonMap = json.decode(response.body);
+            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
+            var list = responseModel.data;
+            regions = list.map((e) => Region.fromJson(e)).toList();
+          })
+        });
+  }
+
+  void getSorts() {
+    SortApi.getSorts().then((response) => {
+          setState(() {
+            var jsonMap = json.decode(response.body);
+            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
+            var list = responseModel.data;
+            sorts = list.map((e) => Sort.fromJson(e)).toList();
+          })
+        });
+  }
+
+  void setValues() {
+    dropdownRegionValue = widget.updatedTissue[0].regionId.toString();
+    dropdownSortValue = widget.updatedTissue[0].sortId.toString();
+    dropdownGenderValue = widget.updatedTissue[0].gender;
+    dropdownOriginValue = widget.tissueDetail.origin;
+    txtName.text = widget.tissueDetail.name;
+    txtRegion.text = widget.updatedTissue[0].regionId.toString();
+    txtSort.text = widget.updatedTissue[0].sortId.toString();
+    txtGender.text = widget.tissueDetail.gender;
+    txtOrigin.text = widget.tissueDetail.origin;
   }
 
   void selectProcess(Options value) async {
@@ -122,20 +267,13 @@ class _TissueDetailState extends State<TissueDetail> {
         Navigator.pop(context, true);
         break;
       case Options.update:
-        List<Tissue> updatedTissue;
-        TissueApi.getTissueById(widget.tissueDetail.id).then((response) {
-          setState(() {
-            var jsonMap = json.decode(response.body);
-            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-            var list=responseModel.data;
-             updatedTissue= list.map((e) => Tissue.fromJson(e)).toList();
-          });
-        });
+        print(txtSort.text);
+        print(txtRegion.text);
         await TissueApi.updateTissue(Tissue(
             id: widget.tissueDetail.id,
             name: txtName.text,
-            sortId: updatedTissue[0].sortId,
-            regionId: updatedTissue[0].regionId,
+            sortId: int.parse(txtSort.text),
+            regionId: int.parse(txtRegion.text),
             gender: txtGender.text));
         Navigator.pop(context, true);
         break;
