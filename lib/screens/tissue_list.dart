@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ class TissueList extends StatefulWidget {
 
 class _TissueListState extends State {
   List<TissueDetails> tissueDetails;
-  List<Tissue> detailTissue;
+  Tissue detailTissue;
   int tissueCount = 0;
 
   @override
@@ -83,9 +84,11 @@ class _TissueListState extends State {
     TissueApi.getTissueDetails().then((response) {
       setState(() {
         var jsonMap = json.decode(response.body);
-        ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-        var list=responseModel.data;
-        this.tissueDetails = list.map((e) => TissueDetails.fromJson(e)).toList();
+        ListResponseModel listResponseModel =
+            new ListResponseModel.fromJson(jsonMap);
+        var list = listResponseModel.dataList;
+        this.tissueDetails =
+            list.map((e) => TissueDetails.fromJson(e)).toList();
         this.tissueCount = this.tissueDetails.length;
       });
     });
@@ -94,7 +97,9 @@ class _TissueListState extends State {
   void goToDetail(TissueDetails tissueDetails) async {
     await getTissueById(tissueDetails.id);
     bool result = await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueDetail(tissueDetails,detailTissue)));
+        context,
+        MaterialPageRoute(
+            builder: (context) => TissueDetail(tissueDetails, detailTissue)));
     if (result != null) {
       if (result) {
         getTissueDetails();
@@ -102,13 +107,11 @@ class _TissueListState extends State {
     }
   }
 
-  Future getTissueById(int id) async{
+  Future getTissueById(int id) async {
     await TissueApi.getTissueById(id).then((response) {
       var jsonMap = json.decode(response.body);
-      List data = [jsonMap['data']];
-      ResponseModel responseModel = new ResponseModel(data: data);
-      var list = responseModel.data;
-      detailTissue = list.map((e) => Tissue.fromJson(e)).toList();
+      ResponseModel<Tissue> responseModel = new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
+      detailTissue = responseModel.data;
     });
   }
 }

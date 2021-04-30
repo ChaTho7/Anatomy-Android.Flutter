@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
 import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
+import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
-import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -149,12 +149,12 @@ class TissueAddState extends State<TissueAdd> {
           txtGender.text = newValue;
         });
       },
-      items: genders
-          .map<DropdownMenuItem<String>>((String value) {
+      items: genders.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
             value: value,
             child: Center(
-              child: Text(value,
+              child: Text(
+                value,
               ),
             ));
       }).toList(),
@@ -180,7 +180,7 @@ class TissueAddState extends State<TissueAdd> {
         name: txtName.text,
         regionId: int.parse(txtRegion.text),
         sortId: int.parse(txtSort.text),
-        gender: txtGender.text == "" ? null:txtGender.text);
+        gender: txtGender.text == "" ? null : txtGender.text);
     await TissueApi.addTissue(addedTissue);
     Navigator.pop(context, true);
   }
@@ -189,8 +189,9 @@ class TissueAddState extends State<TissueAdd> {
     RegionApi.getRegions().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
-            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-            var list = responseModel.data;
+            ListResponseModel listResponseModel =
+                new ListResponseModel.fromJson(jsonMap);
+            var list = listResponseModel.dataList;
             regions = list.map((e) => Region.fromJson(e)).toList();
           })
         });
@@ -200,8 +201,9 @@ class TissueAddState extends State<TissueAdd> {
     SortApi.getSorts().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
-            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-            var list = responseModel.data;
+            ListResponseModel listResponseModel =
+                new ListResponseModel.fromJson(jsonMap);
+            var list = listResponseModel.dataList;
             sorts = list.map((e) => Sort.fromJson(e)).toList();
           })
         });

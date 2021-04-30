@@ -3,25 +3,23 @@ import 'dart:convert';
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
 import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
+import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
-import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:flutter/material.dart';
 
 class TissueDetail extends StatefulWidget {
-  TissueDetail(this.tissueDetail,this.updatedTissue);
+  TissueDetail(this.tissueDetail, this.updatedTissue);
 
   TissueDetails tissueDetail;
-  List<Tissue> updatedTissue;
+  Tissue updatedTissue;
 
   @override
   State<StatefulWidget> createState() {
     return _TissueDetailState();
   }
-
-
 }
 
 enum Options { delete, update }
@@ -230,8 +228,9 @@ class _TissueDetailState extends State<TissueDetail> {
     RegionApi.getRegions().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
-            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-            var list = responseModel.data;
+            ListResponseModel listResponseModel =
+                new ListResponseModel.fromJson(jsonMap);
+            var list = listResponseModel.dataList;
             regions = list.map((e) => Region.fromJson(e)).toList();
           })
         });
@@ -241,21 +240,22 @@ class _TissueDetailState extends State<TissueDetail> {
     SortApi.getSorts().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
-            ResponseModel responseModel = new ResponseModel.fromJson(jsonMap);
-            var list = responseModel.data;
+            ListResponseModel listResponseModel =
+                new ListResponseModel.fromJson(jsonMap);
+            var list = listResponseModel.dataList;
             sorts = list.map((e) => Sort.fromJson(e)).toList();
           })
         });
   }
 
   void setValues() {
-    dropdownRegionValue = widget.updatedTissue[0].regionId.toString();
-    dropdownSortValue = widget.updatedTissue[0].sortId.toString();
-    dropdownGenderValue = widget.updatedTissue[0].gender;
+    dropdownRegionValue = widget.updatedTissue.regionId.toString();
+    dropdownSortValue = widget.updatedTissue.sortId.toString();
+    dropdownGenderValue = widget.updatedTissue.gender;
     dropdownOriginValue = widget.tissueDetail.origin;
     txtName.text = widget.tissueDetail.name;
-    txtRegion.text = widget.updatedTissue[0].regionId.toString();
-    txtSort.text = widget.updatedTissue[0].sortId.toString();
+    txtRegion.text = widget.updatedTissue.regionId.toString();
+    txtSort.text = widget.updatedTissue.sortId.toString();
     txtGender.text = widget.tissueDetail.gender;
     txtOrigin.text = widget.tissueDetail.origin;
   }

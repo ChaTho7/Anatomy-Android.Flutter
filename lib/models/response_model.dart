@@ -1,5 +1,5 @@
-class ResponseModel {
-  List data;
+class ResponseModel<T> {
+  T data;
   bool success;
   String message;
 
