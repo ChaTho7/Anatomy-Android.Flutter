@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
 import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
@@ -6,8 +7,8 @@ import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TissueAdd extends StatefulWidget {
   @override
@@ -17,6 +18,10 @@ class TissueAdd extends StatefulWidget {
 }
 
 class TissueAddState extends State<TissueAdd> {
+  TissueAddState() {
+    startTimer();
+  }
+
   List<Region> regions;
   List<Sort> sorts;
   List<String> genders = ["Male", "Female", ""];
@@ -27,40 +32,115 @@ class TissueAddState extends State<TissueAdd> {
   var txtSort = TextEditingController();
   var txtRegion = TextEditingController();
   var txtGender = TextEditingController();
+  bool regionResult = false;
+  bool sortResult = false;
+  int timer = 5;
 
   @override
   void initState() {
-    getRegions();
-    getSorts();
+    startTimer();
+    getRegions().whenComplete(() => setState(() {
+          regionResult = true;
+        }));
+    getSorts().whenComplete(() => setState(() {
+          sortResult = true;
+        }));
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black87,
-        centerTitle: true,
-        title: Text("Tissue Add"),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(25),
+    if (sortResult && regionResult) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black87,
+          centerTitle: true,
+          title: Text("Tissue Add"),
+        ),
+        body: Padding(
+          padding: EdgeInsets.all(25),
+          child: Column(
+            children: <Widget>[
+              buildNameField(),
+              buildSortField(),
+              buildRegionField(),
+              buildGenderField(),
+              SizedBox(
+                height: 25,
+              ),
+              buildSaveButton()
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Scaffold(
+          body: Center(
         child: Column(
           children: <Widget>[
-            buildNameField(),
-            buildSortField(),
-            buildRegionField(),
-            buildGenderField(),
-            buildSaveButton()
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.3,
+            ),
+            SpinKitFoldingCube(
+              color: Colors.black,
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.1,
+            ),
+            timer == 0
+                ? buildTryButton()
+                : SizedBox(
+                    child: Text("Getting data... " + timer.toString()),
+                  ),
           ],
         ),
-      ),
-    );
+      ));
+    }
+  }
+
+  startTimer() {
+    Timer.periodic(Duration(seconds: 1), (result) {
+      setState(() {
+        timer--;
+        if (timer == 0) {
+          result.cancel();
+        }
+      });
+    });
+  }
+
+  buildTryButton() {
+    return ElevatedButton(
+        onPressed: reloadPage,
+        child: Text("Try again"),
+        style: ElevatedButton.styleFrom(
+          primary: Colors.white, // background
+          onPrimary: Colors.black, // foreground
+        ));
+  }
+
+  reloadPage() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => TissueAdd()));
   }
 
   TextField buildNameField() {
     return TextField(
-      decoration: InputDecoration(labelText: "Tissue Name"),
+      cursorColor: Colors.black,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+          contentPadding: new EdgeInsets.symmetric(vertical: 10),
+          labelText: "Tissue Name",
+          alignLabelWithHint: true,
+          labelStyle: TextStyle(
+            color: Colors.black,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black, width: 2),
+          )),
       controller: txtName,
     );
   }
@@ -70,12 +150,13 @@ class TissueAddState extends State<TissueAdd> {
       isExpanded: true,
       value: dropdownRegionValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -103,12 +184,13 @@ class TissueAddState extends State<TissueAdd> {
       isExpanded: true,
       value: dropdownSortValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -136,12 +218,13 @@ class TissueAddState extends State<TissueAdd> {
       isExpanded: true,
       value: dropdownGenderValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -162,20 +245,23 @@ class TissueAddState extends State<TissueAdd> {
   }
 
   buildSaveButton() {
-    return TextButton(
-      style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.black54)),
-      child: Text(
-        "Add",
-        style: TextStyle(color: Colors.white),
+    return SizedBox(
+      width: 100,
+      child: TextButton(
+        style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.black87)),
+        child: Text(
+          "Add",
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: () {
+          addTissue();
+        },
       ),
-      onPressed: () {
-        addTissue();
-      },
     );
   }
 
-  void addTissue() async {
+  Future addTissue() async {
     var addedTissue = new Tissue(
         name: txtName.text,
         regionId: int.parse(txtRegion.text),
@@ -185,8 +271,8 @@ class TissueAddState extends State<TissueAdd> {
     Navigator.pop(context, true);
   }
 
-  void getRegions() {
-    RegionApi.getRegions().then((response) => {
+  Future getRegions() async {
+    await RegionApi.getRegions().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
             ListResponseModel listResponseModel =
@@ -197,8 +283,8 @@ class TissueAddState extends State<TissueAdd> {
         });
   }
 
-  void getSorts() {
-    SortApi.getSorts().then((response) => {
+  Future getSorts() async {
+    await SortApi.getSorts().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
             ListResponseModel listResponseModel =

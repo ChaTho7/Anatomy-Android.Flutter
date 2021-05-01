@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
@@ -8,13 +9,14 @@ import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
+import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TissueDetail extends StatefulWidget {
-  TissueDetail(this.tissueDetail, this.updatedTissue);
-
   TissueDetails tissueDetail;
-  Tissue updatedTissue;
+
+  TissueDetail(this.tissueDetail);
 
   @override
   State<StatefulWidget> createState() {
@@ -24,9 +26,53 @@ class TissueDetail extends StatefulWidget {
 
 enum Options { delete, update }
 
-class _TissueDetailState extends State<TissueDetail> {
-  //_TissueDetailState();
+class _ReloadPage extends State<TissueDetail> {
+  Tissue selectedTissue;
 
+  _ReloadPage(this.selectedTissue);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: Center(
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.3,
+          ),
+          SpinKitFoldingCube(
+            color: Colors.black,
+          ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.1,
+          ),
+          FloatingActionButton(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            onPressed: () {
+              reloadPage();
+            },
+            child: Text("Reload"),
+          )
+        ],
+      ),
+    ));
+  }
+
+  reloadPage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => TissueDetail(widget.tissueDetail)));
+  }
+}
+
+class _TissueDetailState extends State<TissueDetail> {
+  _TissueDetailState() {
+    startTimer();
+  }
+
+  Tissue selectedTissue;
   List<Region> regions;
   List<Sort> sorts;
   List<String> genders = ["Male", "Female", ""];
@@ -40,40 +86,114 @@ class _TissueDetailState extends State<TissueDetail> {
   var txtRegion = TextEditingController();
   var txtGender = TextEditingController();
   var txtOrigin = TextEditingController();
+  bool regionResult = false;
+  bool sortResult = false;
+  bool tissueResult = false;
+  int timer = 5;
 
   @override
   void initState() {
-    getRegions();
-    getSorts();
-    setValues();
+    getTissueById(widget.tissueDetail.id).whenComplete(() => setState(() {
+          tissueResult = true;
+        }));
+    getRegions().whenComplete(() => setState(() {
+          regionResult = true;
+        }));
+    getSorts().whenComplete(() => setState(() {
+          sortResult = true;
+        }));
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black87,
-        centerTitle: true,
-        title: Text("Tissue Detail : ${widget.tissueDetail.name}"),
-        actions: <Widget>[
-          PopupMenuButton<Options>(
-            onSelected: selectProcess,
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<Options>>[
-              PopupMenuItem<Options>(
-                value: Options.delete,
-                child: Text("Delete"),
-              ),
-              PopupMenuItem<Options>(
-                value: Options.update,
-                child: Text("Update"),
-              )
-            ],
-          )
-        ],
-      ),
-      body: buildTissueDetail(),
-    );
+    if (sortResult && regionResult && tissueResult) {
+      setValues();
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black87,
+          centerTitle: true,
+          title: Text("Tissue Detail : ${widget.tissueDetail.name}"),
+          actions: <Widget>[
+            PopupMenuButton<Options>(
+              onSelected: selectProcess,
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<Options>>[
+                PopupMenuItem<Options>(
+                  value: Options.delete,
+                  child: Text("Delete"),
+                ),
+                PopupMenuItem<Options>(
+                  value: Options.update,
+                  child: Text("Update"),
+                )
+              ],
+            )
+          ],
+        ),
+        body: buildTissueDetail(),
+      );
+    } else {
+      return Scaffold(
+          body: Center(
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.3,
+            ),
+            SpinKitFoldingCube(
+              color: Colors.black,
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.1,
+            ),
+            timer == 0
+                ? buildTryButton()
+                : SizedBox(
+                    child: Text("Getting data... " + timer.toString()),
+                  ),
+          ],
+        ),
+      ));
+    }
+  }
+
+  startTimer() {
+    Timer.periodic(Duration(seconds: 1), (result) {
+      setState(() {
+        timer--;
+        if (timer == 0) {
+          result.cancel();
+        }
+      });
+    });
+  }
+
+  buildTryButton() {
+    return ElevatedButton(
+        onPressed: reloadPage,
+        child: Text("Try again"),
+        style: ElevatedButton.styleFrom(
+          primary: Colors.white, // background
+          onPrimary: Colors.black, // foreground
+        ));
+  }
+
+  Future getTissueById(int id) async {
+    await TissueApi.getTissueById(id).then((response) {
+      var jsonMap = json.decode(response.body);
+      ResponseModel<Tissue> responseModel =
+          new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
+      setState(() {
+        selectedTissue = responseModel.data;
+      });
+    });
+  }
+
+  reloadPage() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => TissueDetail(widget.tissueDetail)));
   }
 
   buildTissueDetail() {
@@ -93,7 +213,20 @@ class _TissueDetailState extends State<TissueDetail> {
 
   TextField buildNameField() {
     return TextField(
-      decoration: InputDecoration(labelText: "Tissue Name"),
+      cursorColor: Colors.black,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+          contentPadding: new EdgeInsets.symmetric(vertical: 10),
+          labelText: "Tissue Name",
+          labelStyle: TextStyle(
+            color: Colors.black,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black, width: 2),
+          )),
       controller: txtName,
     );
   }
@@ -103,12 +236,13 @@ class _TissueDetailState extends State<TissueDetail> {
       isExpanded: true,
       value: dropdownRegionValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -136,12 +270,13 @@ class _TissueDetailState extends State<TissueDetail> {
       isExpanded: true,
       value: dropdownSortValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -169,12 +304,13 @@ class _TissueDetailState extends State<TissueDetail> {
       isExpanded: true,
       value: dropdownGenderValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -199,12 +335,13 @@ class _TissueDetailState extends State<TissueDetail> {
       isExpanded: true,
       value: dropdownOriginValue,
       icon: const Icon(Icons.arrow_downward),
+      iconEnabledColor: Colors.black,
       iconSize: 24,
       elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
+      style: const TextStyle(color: Colors.black),
       underline: Container(
         height: 2,
-        color: Colors.deepPurpleAccent,
+        color: Colors.black,
       ),
       onChanged: (String newValue) {
         setState(() {
@@ -224,8 +361,8 @@ class _TissueDetailState extends State<TissueDetail> {
     );
   }
 
-  void getRegions() {
-    RegionApi.getRegions().then((response) => {
+  Future getRegions() async {
+    await RegionApi.getRegions().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
             ListResponseModel listResponseModel =
@@ -236,7 +373,7 @@ class _TissueDetailState extends State<TissueDetail> {
         });
   }
 
-  void getSorts() {
+  Future getSorts() async {
     SortApi.getSorts().then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
@@ -249,13 +386,13 @@ class _TissueDetailState extends State<TissueDetail> {
   }
 
   void setValues() {
-    dropdownRegionValue = widget.updatedTissue.regionId.toString();
-    dropdownSortValue = widget.updatedTissue.sortId.toString();
-    dropdownGenderValue = widget.updatedTissue.gender;
+    dropdownRegionValue = selectedTissue.regionId.toString();
+    dropdownSortValue = selectedTissue.sortId.toString();
+    dropdownGenderValue = selectedTissue.gender;
     dropdownOriginValue = widget.tissueDetail.origin;
     txtName.text = widget.tissueDetail.name;
-    txtRegion.text = widget.updatedTissue.regionId.toString();
-    txtSort.text = widget.updatedTissue.sortId.toString();
+    txtRegion.text = selectedTissue.regionId.toString();
+    txtSort.text = selectedTissue.sortId.toString();
     txtGender.text = widget.tissueDetail.gender;
     txtOrigin.text = widget.tissueDetail.origin;
   }
