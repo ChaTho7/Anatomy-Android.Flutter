@@ -34,11 +34,11 @@ class TissueAddState extends State<TissueAdd> {
   var txtGender = TextEditingController();
   bool regionResult = false;
   bool sortResult = false;
-  int timer = 5;
+  Timer _timer;
+  int timer = 10;
 
   @override
   void initState() {
-    startTimer();
     getRegions().whenComplete(() => setState(() {
           regionResult = true;
         }));
@@ -46,6 +46,12 @@ class TissueAddState extends State<TissueAdd> {
           sortResult = true;
         }));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -74,32 +80,12 @@ class TissueAddState extends State<TissueAdd> {
         ),
       );
     } else {
-      return Scaffold(
-          body: Center(
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.3,
-            ),
-            SpinKitFoldingCube(
-              color: Colors.black,
-            ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.1,
-            ),
-            timer == 0
-                ? buildTryButton()
-                : SizedBox(
-                    child: Text("Getting data... " + timer.toString()),
-                  ),
-          ],
-        ),
-      ));
+      return buildLoadingPage();
     }
   }
 
   startTimer() {
-    Timer.periodic(Duration(seconds: 1), (result) {
+    _timer = Timer.periodic(Duration(seconds: 1), (result) {
       setState(() {
         timer--;
         if (timer == 0) {
@@ -112,7 +98,7 @@ class TissueAddState extends State<TissueAdd> {
   buildTryButton() {
     return ElevatedButton(
         onPressed: reloadPage,
-        child: Text("Try again"),
+        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
         style: ElevatedButton.styleFrom(
           primary: Colors.white, // background
           onPrimary: Colors.black, // foreground
@@ -122,6 +108,38 @@ class TissueAddState extends State<TissueAdd> {
   reloadPage() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => TissueAdd()));
+  }
+
+  buildLoadingPage(){
+    return Scaffold(
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.3,
+              ),
+              Text(
+                "ChaTho Anatomy",
+                style: TextStyle(fontSize: 50, fontFamily: 'BebasNeue'),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.05,
+              ),
+              SpinKitFoldingCube(
+                color: Colors.black,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.1,
+              ),
+              timer == 0
+                  ? buildTryButton()
+                  : SizedBox(
+                child: Text("Getting data" + "." * timer,
+                    style: TextStyle(fontFamily: 'BebasNeue')),
+              ),
+            ],
+          ),
+        ));
   }
 
   TextField buildNameField() {

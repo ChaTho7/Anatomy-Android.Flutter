@@ -23,8 +23,10 @@ class _TissueListState extends State {
 
   List<TissueDetails> tissueDetails;
   Tissue selectedTissue;
+  var txtName = TextEditingController();
   bool result = false;
-  int timer = 5;
+  Timer _timer;
+  int timer = 10;
 
   @override
   void initState() {
@@ -35,15 +37,33 @@ class _TissueListState extends State {
   }
 
   @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (result) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("Tissue List"),
+          title: Text("Tissue List", style: TextStyle(fontFamily: 'BebasNeue')),
           backgroundColor: Colors.black87,
           centerTitle: true,
         ),
-        body: buildTissueList(),
+        body: Column(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  MediaQuery.of(context).size.width * 0.15,
+                  5,
+                  MediaQuery.of(context).size.width * 0.15,
+                  0),
+              child: buildNameField(),
+            ),
+            buildTissueList()
+          ],
+        ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
@@ -55,32 +75,12 @@ class _TissueListState extends State {
         ),
       );
     } else {
-      return Scaffold(
-          body: Center(
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.3,
-            ),
-            SpinKitFoldingCube(
-              color: Colors.black,
-            ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.1,
-            ),
-            timer == 0
-                ? buildTryButton()
-                : SizedBox(
-                    child: Text("Getting data... " + timer.toString()),
-                  ),
-          ],
-        ),
-      ));
+      return buildLoadingPge();
     }
   }
 
   startTimer() {
-    Timer.periodic(Duration(seconds: 1), (result) {
+    _timer = Timer.periodic(Duration(seconds: 1), (result) {
       setState(() {
         timer--;
         if (timer == 0) {
@@ -93,8 +93,10 @@ class _TissueListState extends State {
   buildTryButton() {
     return ElevatedButton(
         onPressed: reloadPage,
-        child: Text("Try again"),
+        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
         style: ElevatedButton.styleFrom(
+          minimumSize: Size(MediaQuery.of(context).size.width * 0.3,
+              MediaQuery.of(context).size.height * 0.07),
           primary: Colors.white, // background
           onPrimary: Colors.black, // foreground
         ));
@@ -105,39 +107,96 @@ class _TissueListState extends State {
         context, MaterialPageRoute(builder: (context) => TissueList()));
   }
 
+  buildLoadingPge(){
+    return Scaffold(
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
+              ),
+              Image.asset(
+                "assets/images/logo.png",
+                width: MediaQuery.of(context).size.width * 0.85,
+                height: MediaQuery.of(context).size.height * 0.25,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.1,
+              ),
+              timer == 0
+                  ? buildTryButton()
+                  : SpinKitFoldingCube(
+                color: Colors.black,
+                size: 60,
+              ),
+            ],
+          ),
+        ));
+  }
+
+  TextField buildNameField() {
+    return TextField(
+      cursorColor: Colors.black,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+          contentPadding: new EdgeInsets.symmetric(vertical: 10),
+          labelText: "Tissue Name",
+          labelStyle: TextStyle(
+            color: Colors.black,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black, width: 2),
+          )),
+      controller: txtName,
+    );
+  }
+
   buildTissueList() {
-    return GridView.count(
-        crossAxisCount: 2,
-        children: List.generate(tissueDetails.length, (index) {
-          return Card(
-            color: Colors.black87,
-            elevation: 2,
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.transparent,
-                child: Text(
-                  (this.tissueDetails[index].id).toString(),
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ),
-              title: Text(
-                this.tissueDetails[index].name,
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              subtitle: Text(this.tissueDetails[index].sort,
-                  style: TextStyle(
-                    color: Colors.white38,
+    List<TissueDetails> list;
+    setState(() {
+      list=tissueDetails.where((t) => t.name.toLowerCase().contains(txtName.text.toLowerCase())).toList();
+    });
+
+    return Expanded(
+      child: GridView.count(
+          crossAxisCount: 2,
+          children: List.generate(list.length, (index) {
+            return Card(
+              color: Colors.black87,
+              elevation: 2,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Text(
+                    (list[index].id).toString(),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontFamily: 'BebasNeue'),
                   ),
-                  textAlign: TextAlign.center),
-              onTap: () {
-                goToDetail(this.tissueDetails[index]);
-              },
-            ),
-          );
-        }));
+                ),
+                title: Text(
+                  list[index].name,
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                subtitle: Text(list[index].sort,
+                    style: TextStyle(
+                      color: Colors.white38,
+                    ),
+                    textAlign: TextAlign.center),
+                onTap: () {
+                  goToDetail(list[index]);
+                },
+              ),
+            );
+          })),
+    );
   }
 
   void goToTissueAdd() async {

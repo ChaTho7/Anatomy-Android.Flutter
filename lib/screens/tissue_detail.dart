@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
 import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
+import 'package:ChaTho_Anatomy/data/api/tissueImage_api.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
 import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/models/TissueImage.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:ChaTho_Anatomy/models/response_model.dart';
 import 'package:flutter/material.dart';
@@ -75,6 +78,7 @@ class _TissueDetailState extends State<TissueDetail> {
   Tissue selectedTissue;
   List<Region> regions;
   List<Sort> sorts;
+  List<TissueImage> tissueImages;
   List<String> genders = ["Male", "Female", ""];
   List<String> origins = ["Endoderm", "Ektoderm", "Mezoderm"];
   var dropdownGenderValue;
@@ -86,28 +90,39 @@ class _TissueDetailState extends State<TissueDetail> {
   var txtRegion = TextEditingController();
   var txtGender = TextEditingController();
   var txtOrigin = TextEditingController();
-  bool regionResult = false;
-  bool sortResult = false;
+  bool regionsResult = false;
+  bool sortsResult = false;
   bool tissueResult = false;
-  int timer = 5;
+  bool tissueImagesResult = false;
+  Timer _timer;
+  int timer = 10;
 
   @override
   void initState() {
+    getTissueImages(widget.tissueDetail.id).whenComplete(() => setState(() {
+          tissueImagesResult = true;
+        }));
     getTissueById(widget.tissueDetail.id).whenComplete(() => setState(() {
           tissueResult = true;
         }));
     getRegions().whenComplete(() => setState(() {
-          regionResult = true;
+          regionsResult = true;
         }));
     getSorts().whenComplete(() => setState(() {
-          sortResult = true;
+          sortsResult = true;
         }));
     super.initState();
   }
 
   @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (sortResult && regionResult && tissueResult) {
+    if (sortsResult && regionsResult && tissueResult && tissueImagesResult) {
       setValues();
       return Scaffold(
         appBar: AppBar(
@@ -119,12 +134,20 @@ class _TissueDetailState extends State<TissueDetail> {
               onSelected: selectProcess,
               itemBuilder: (BuildContext context) => <PopupMenuEntry<Options>>[
                 PopupMenuItem<Options>(
+                  height: 50,
                   value: Options.delete,
-                  child: Text("Delete"),
+                  child: Center(
+                      child: Text(
+                    "Delete",
+                    style: TextStyle(fontFamily: 'BebasNeue'),
+                  )),
                 ),
                 PopupMenuItem<Options>(
+                  height: 50,
                   value: Options.update,
-                  child: Text("Update"),
+                  child: Center(
+                      child: Text("Update",
+                          style: TextStyle(fontFamily: 'BebasNeue'))),
                 )
               ],
             )
@@ -133,32 +156,12 @@ class _TissueDetailState extends State<TissueDetail> {
         body: buildTissueDetail(),
       );
     } else {
-      return Scaffold(
-          body: Center(
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.3,
-            ),
-            SpinKitFoldingCube(
-              color: Colors.black,
-            ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.1,
-            ),
-            timer == 0
-                ? buildTryButton()
-                : SizedBox(
-                    child: Text("Getting data... " + timer.toString()),
-                  ),
-          ],
-        ),
-      ));
+      return buildLoadingPage();
     }
   }
 
   startTimer() {
-    Timer.periodic(Duration(seconds: 1), (result) {
+    _timer = Timer.periodic(Duration(seconds: 1), (result) {
       setState(() {
         timer--;
         if (timer == 0) {
@@ -171,10 +174,42 @@ class _TissueDetailState extends State<TissueDetail> {
   buildTryButton() {
     return ElevatedButton(
         onPressed: reloadPage,
-        child: Text("Try again"),
+        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
         style: ElevatedButton.styleFrom(
           primary: Colors.white, // background
           onPrimary: Colors.black, // foreground
+        ));
+  }
+
+  buildLoadingPage(){
+    return Scaffold(
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.3,
+              ),
+              Text(
+                "ChaTho Anatomy",
+                style: TextStyle(fontSize: 50, fontFamily: 'BebasNeue'),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.05,
+              ),
+              SpinKitFoldingCube(
+                color: Colors.black,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.1,
+              ),
+              timer == 0
+                  ? buildTryButton()
+                  : SizedBox(
+                child: Text("Getting data" + "." * timer,
+                    style: TextStyle(fontFamily: 'BebasNeue')),
+              ),
+            ],
+          ),
         ));
   }
 
@@ -205,7 +240,11 @@ class _TissueDetailState extends State<TissueDetail> {
           buildSortField(),
           buildRegionField(),
           buildGenderField(),
-          buildOriginField()
+          buildOriginField(),
+          SizedBox(
+            height: 30,
+          ),
+          buildImagesField(),
         ],
       ),
     );
@@ -361,6 +400,23 @@ class _TissueDetailState extends State<TissueDetail> {
     );
   }
 
+  buildImagesField() {
+    if(tissueImages[0].image!=null){
+      Uint8List _bytesImage;
+      setState(() {
+        String _imgString = tissueImages[0].image;
+        _bytesImage = Base64Decoder().convert(_imgString);
+      });
+      return SizedBox(
+        child: Image.memory(_bytesImage),
+        height: MediaQuery.of(context).size.height *0.3,
+        width: MediaQuery.of(context).size.width *0.9,
+      );
+    }else{
+      return buildLoadingPage();
+    }
+  }
+
   Future getRegions() async {
     await RegionApi.getRegions().then((response) => {
           setState(() {
@@ -385,6 +441,18 @@ class _TissueDetailState extends State<TissueDetail> {
         });
   }
 
+  Future getTissueImages(int id) async {
+    TissueImageApi.getTissueImages(id).then((response) => {
+          setState(() {
+            var jsonMap = json.decode(response.body);
+            ListResponseModel listResponseModel =
+                new ListResponseModel.fromJson(jsonMap);
+            var list = listResponseModel.dataList;
+            tissueImages = list.map((e) => TissueImage.fromJson(e)).toList();
+          })
+        });
+  }
+
   void setValues() {
     dropdownRegionValue = selectedTissue.regionId.toString();
     dropdownSortValue = selectedTissue.sortId.toString();
@@ -400,8 +468,7 @@ class _TissueDetailState extends State<TissueDetail> {
   void selectProcess(Options value) async {
     switch (value) {
       case Options.delete:
-        //await dbHelper.delete(tissue.id);
-        Navigator.pop(context, true);
+        //Navigator.pop(context, true);
         break;
       case Options.update:
         print(txtSort.text);
