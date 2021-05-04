@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
+import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
+import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
 import 'package:ChaTho_Anatomy/data/api/tissue_api.dart';
 import 'package:ChaTho_Anatomy/screens/tissue_add.dart';
 import 'package:ChaTho_Anatomy/screens/tissue_detail.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TissueList extends StatefulWidget {
   @override
@@ -17,34 +18,23 @@ class TissueList extends StatefulWidget {
 }
 
 class _TissueListState extends State {
-  _TissueListState() {
-    startTimer();
-  }
 
   List<TissueDetails> tissueDetails;
   Tissue selectedTissue;
   var txtName = TextEditingController();
-  bool result = false;
-  Timer _timer;
-  int timer = 10;
+  Map<String,bool> results={"tissues":false};
+  Function reloader;
 
   @override
   void initState() {
-    getTissueDetails().then((response) => setState(() {
-          result = true;
-        }));
+    reloader = ()=>ReloadPage.reloadPage(context, TissueList());
+    getTissueDetails();
     super.initState();
   }
 
   @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (result) {
+    if (results.values.contains(false) ? false:true) {
       return Scaffold(
         appBar: AppBar(
           title: Text("Tissue List", style: TextStyle(fontFamily: 'BebasNeue')),
@@ -58,7 +48,7 @@ class _TissueListState extends State {
                   MediaQuery.of(context).size.width * 0.15,
                   5,
                   MediaQuery.of(context).size.width * 0.15,
-                  0),
+                  1.5),
               child: buildNameField(),
             ),
             buildTissueList()
@@ -75,83 +65,8 @@ class _TissueListState extends State {
         ),
       );
     } else {
-      return buildLoadingPge();
+      return LoadingPage(reloader,results);
     }
-  }
-
-  startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (result) {
-      setState(() {
-        timer--;
-        if (timer == 0) {
-          result.cancel();
-        }
-      });
-    });
-  }
-
-  buildTryButton() {
-    return ElevatedButton(
-        onPressed: reloadPage,
-        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
-        style: ElevatedButton.styleFrom(
-          minimumSize: Size(MediaQuery.of(context).size.width * 0.3,
-              MediaQuery.of(context).size.height * 0.07),
-          primary: Colors.white, // background
-          onPrimary: Colors.black, // foreground
-        ));
-  }
-
-  reloadPage() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueList()));
-  }
-
-  buildLoadingPge(){
-    return Scaffold(
-        body: Center(
-          child: Column(
-            children: <Widget>[
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.25,
-              ),
-              Image.asset(
-                "assets/images/logo.png",
-                width: MediaQuery.of(context).size.width * 0.85,
-                height: MediaQuery.of(context).size.height * 0.25,
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.1,
-              ),
-              timer == 0
-                  ? buildTryButton()
-                  : SpinKitFoldingCube(
-                color: Colors.black,
-                size: 60,
-              ),
-            ],
-          ),
-        ));
-  }
-
-  TextField buildNameField() {
-    return TextField(
-      cursorColor: Colors.black,
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-          contentPadding: new EdgeInsets.symmetric(vertical: 10),
-          labelText: "Tissue Name",
-          labelStyle: TextStyle(
-            color: Colors.black,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.black, width: 2.0),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.black, width: 2),
-          )),
-      controller: txtName,
-    );
   }
 
   buildTissueList() {
@@ -199,14 +114,24 @@ class _TissueListState extends State {
     );
   }
 
-  void goToTissueAdd() async {
-    bool result = await Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueAdd()));
-    if (result != null) {
-      if (result) {
-        getTissueDetails();
-      }
-    }
+  TextField buildNameField() {
+    return TextField(
+      cursorColor: Colors.black,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+          contentPadding: new EdgeInsets.symmetric(vertical: 10),
+          labelText: "Tissue Name",
+          labelStyle: TextStyle(
+            color: Colors.black,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black, width: 2),
+          )),
+      controller: txtName,
+    );
   }
 
   Future getTissueDetails() async {
@@ -218,8 +143,21 @@ class _TissueListState extends State {
         var list = listResponseModel.dataList;
         this.tissueDetails =
             list.map((e) => TissueDetails.fromJson(e)).toList();
+        setState(() {
+          results["tissues"]=true;
+        });
       });
     });
+  }
+
+  void goToTissueAdd() async {
+    bool result = await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => TissueAdd()));
+    if (result != null) {
+      if (result) {
+        getTissueDetails();
+      }
+    }
   }
 
   void goToDetail(TissueDetails tissueDetails) async {

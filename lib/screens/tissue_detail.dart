@@ -13,8 +13,9 @@ import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/TissueImage.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:ChaTho_Anatomy/models/response_model.dart';
+import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
+import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TissueDetail extends StatefulWidget {
   TissueDetails tissueDetail;
@@ -29,51 +30,7 @@ class TissueDetail extends StatefulWidget {
 
 enum Options { delete, update }
 
-class _ReloadPage extends State<TissueDetail> {
-  Tissue selectedTissue;
-
-  _ReloadPage(this.selectedTissue);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        body: Center(
-      child: Column(
-        children: <Widget>[
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.3,
-          ),
-          SpinKitFoldingCube(
-            color: Colors.black,
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.1,
-          ),
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            onPressed: () {
-              reloadPage();
-            },
-            child: Text("Reload"),
-          )
-        ],
-      ),
-    ));
-  }
-
-  reloadPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => TissueDetail(widget.tissueDetail)));
-  }
-}
-
 class _TissueDetailState extends State<TissueDetail> {
-  _TissueDetailState() {
-    startTimer();
-  }
 
   Tissue selectedTissue;
   List<Region> regions;
@@ -86,43 +43,22 @@ class _TissueDetailState extends State<TissueDetail> {
   var dropdownRegionValue;
   var dropdownSortValue;
   var txtName = TextEditingController();
-  var txtSort = TextEditingController();
-  var txtRegion = TextEditingController();
-  var txtGender = TextEditingController();
-  var txtOrigin = TextEditingController();
-  bool regionsResult = false;
-  bool sortsResult = false;
-  bool tissueResult = false;
-  bool tissueImagesResult = false;
-  Timer _timer;
-  int timer = 10;
+  Map<String,bool> results={"regions":false,"sorts":false,"tissue":false,"tissueImages":false};
+  Function reloader;
 
   @override
   void initState() {
-    getTissueImages(widget.tissueDetail.id).whenComplete(() => setState(() {
-          tissueImagesResult = true;
-        }));
-    getTissueById(widget.tissueDetail.id).whenComplete(() => setState(() {
-          tissueResult = true;
-        }));
-    getRegions().whenComplete(() => setState(() {
-          regionsResult = true;
-        }));
-    getSorts().whenComplete(() => setState(() {
-          sortsResult = true;
-        }));
+    reloader = ()=>ReloadPage.reloadPage(context, TissueDetail(widget.tissueDetail));
+    getSorts();
+    getRegions();
+    getTissueById(widget.tissueDetail.id);
+    getTissueImages(widget.tissueDetail.id);
     super.initState();
   }
 
   @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (sortsResult && regionsResult && tissueResult && tissueImagesResult) {
+    if (results.values.contains(false) ? false:true) {
       setValues();
       return Scaffold(
         appBar: AppBar(
@@ -156,79 +92,8 @@ class _TissueDetailState extends State<TissueDetail> {
         body: buildTissueDetail(),
       );
     } else {
-      return buildLoadingPage();
+      return LoadingPage(reloader,results);
     }
-  }
-
-  startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (result) {
-      setState(() {
-        timer--;
-        if (timer == 0) {
-          result.cancel();
-        }
-      });
-    });
-  }
-
-  buildTryButton() {
-    return ElevatedButton(
-        onPressed: reloadPage,
-        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
-        style: ElevatedButton.styleFrom(
-          primary: Colors.white, // background
-          onPrimary: Colors.black, // foreground
-        ));
-  }
-
-  buildLoadingPage(){
-    return Scaffold(
-        body: Center(
-          child: Column(
-            children: <Widget>[
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.3,
-              ),
-              Text(
-                "ChaTho Anatomy",
-                style: TextStyle(fontSize: 50, fontFamily: 'BebasNeue'),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.05,
-              ),
-              SpinKitFoldingCube(
-                color: Colors.black,
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.1,
-              ),
-              timer == 0
-                  ? buildTryButton()
-                  : SizedBox(
-                child: Text("Getting data" + "." * timer,
-                    style: TextStyle(fontFamily: 'BebasNeue')),
-              ),
-            ],
-          ),
-        ));
-  }
-
-  Future getTissueById(int id) async {
-    await TissueApi.getTissueById(id).then((response) {
-      var jsonMap = json.decode(response.body);
-      ResponseModel<Tissue> responseModel =
-          new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
-      setState(() {
-        selectedTissue = responseModel.data;
-      });
-    });
-  }
-
-  reloadPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => TissueDetail(widget.tissueDetail)));
   }
 
   buildTissueDetail() {
@@ -286,7 +151,6 @@ class _TissueDetailState extends State<TissueDetail> {
       onChanged: (String newValue) {
         setState(() {
           dropdownRegionValue = newValue;
-          txtRegion.text = newValue;
         });
       },
       items: regions
@@ -320,7 +184,6 @@ class _TissueDetailState extends State<TissueDetail> {
       onChanged: (String newValue) {
         setState(() {
           dropdownSortValue = newValue;
-          txtSort.text = newValue;
         });
       },
       items: sorts
@@ -354,7 +217,6 @@ class _TissueDetailState extends State<TissueDetail> {
       onChanged: (String newValue) {
         setState(() {
           dropdownGenderValue = newValue;
-          txtGender.text = newValue;
         });
       },
       items: genders.map<DropdownMenuItem<String>>((String value) {
@@ -385,7 +247,6 @@ class _TissueDetailState extends State<TissueDetail> {
       onChanged: (String newValue) {
         setState(() {
           dropdownOriginValue = newValue;
-          txtGender.text = newValue;
         });
       },
       items: origins.map<DropdownMenuItem<String>>((String value) {
@@ -401,19 +262,17 @@ class _TissueDetailState extends State<TissueDetail> {
   }
 
   buildImagesField() {
-    if(tissueImages[0].image!=null){
+    if (tissueImages[0].image != null) {
       Uint8List _bytesImage;
-      setState(() {
-        String _imgString = tissueImages[0].image;
-        _bytesImage = Base64Decoder().convert(_imgString);
-      });
+      String _imgString = tissueImages[0].image;
+      _bytesImage = Base64Decoder().convert(_imgString);
       return SizedBox(
         child: Image.memory(_bytesImage),
-        height: MediaQuery.of(context).size.height *0.3,
-        width: MediaQuery.of(context).size.width *0.9,
+        height: MediaQuery.of(context).size.height * 0.3,
+        width: MediaQuery.of(context).size.width * 0.9,
       );
-    }else{
-      return buildLoadingPage();
+    } else {
+      return LoadingPage(reloader,results);
     }
   }
 
@@ -425,6 +284,9 @@ class _TissueDetailState extends State<TissueDetail> {
                 new ListResponseModel.fromJson(jsonMap);
             var list = listResponseModel.dataList;
             regions = list.map((e) => Region.fromJson(e)).toList();
+            setState(() {
+              results["regions"]=true;
+            });
           })
         });
   }
@@ -437,20 +299,38 @@ class _TissueDetailState extends State<TissueDetail> {
                 new ListResponseModel.fromJson(jsonMap);
             var list = listResponseModel.dataList;
             sorts = list.map((e) => Sort.fromJson(e)).toList();
+            setState(() {
+              results["sorts"]=true;
+            });
           })
         });
   }
 
   Future getTissueImages(int id) async {
-    TissueImageApi.getTissueImages(id).then((response) => {
+    await TissueImageApi.getTissueImages(id).then((response) => {
           setState(() {
             var jsonMap = json.decode(response.body);
             ListResponseModel listResponseModel =
                 new ListResponseModel.fromJson(jsonMap);
             var list = listResponseModel.dataList;
             tissueImages = list.map((e) => TissueImage.fromJson(e)).toList();
+            setState(() {
+              results["tissueImages"]=true;
+            });
           })
         });
+  }
+
+  Future getTissueById(int id) async {
+    await TissueApi.getTissueById(id).then((response) {
+      var jsonMap = json.decode(response.body);
+      ResponseModel<Tissue> responseModel =
+      new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
+      setState(() {
+        selectedTissue = responseModel.data;
+        results["tissue"]=true;
+      });
+    });
   }
 
   void setValues() {
@@ -459,10 +339,6 @@ class _TissueDetailState extends State<TissueDetail> {
     dropdownGenderValue = selectedTissue.gender;
     dropdownOriginValue = widget.tissueDetail.origin;
     txtName.text = widget.tissueDetail.name;
-    txtRegion.text = selectedTissue.regionId.toString();
-    txtSort.text = selectedTissue.sortId.toString();
-    txtGender.text = widget.tissueDetail.gender;
-    txtOrigin.text = widget.tissueDetail.origin;
   }
 
   void selectProcess(Options value) async {
@@ -471,14 +347,12 @@ class _TissueDetailState extends State<TissueDetail> {
         //Navigator.pop(context, true);
         break;
       case Options.update:
-        print(txtSort.text);
-        print(txtRegion.text);
         await TissueApi.updateTissue(Tissue(
             id: widget.tissueDetail.id,
             name: txtName.text,
-            sortId: int.parse(txtSort.text),
-            regionId: int.parse(txtRegion.text),
-            gender: txtGender.text));
+            sortId: int.parse(dropdownSortValue),
+            regionId: int.parse(dropdownSortValue),
+            gender: dropdownGenderValue));
         Navigator.pop(context, true);
         break;
       default:

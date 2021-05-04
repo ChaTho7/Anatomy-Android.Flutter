@@ -7,8 +7,9 @@ import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
+import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TissueAdd extends StatefulWidget {
   @override
@@ -18,45 +19,29 @@ class TissueAdd extends StatefulWidget {
 }
 
 class TissueAddState extends State<TissueAdd> {
-  TissueAddState() {
-    startTimer();
-  }
 
   List<Region> regions;
   List<Sort> sorts;
   List<String> genders = ["Male", "Female", ""];
-  var dropdownRegionValue = "1";
-  var dropdownSortValue = "1";
+  var dropdownRegionValue;
+  var dropdownSortValue;
   var dropdownGenderValue;
   var txtName = TextEditingController();
-  var txtSort = TextEditingController();
-  var txtRegion = TextEditingController();
-  var txtGender = TextEditingController();
-  bool regionResult = false;
-  bool sortResult = false;
-  Timer _timer;
-  int timer = 10;
+  Map<String,bool> results={"regions":false,"sorts":false};
+  Function reloader;
 
   @override
   void initState() {
-    getRegions().whenComplete(() => setState(() {
-          regionResult = true;
-        }));
-    getSorts().whenComplete(() => setState(() {
-          sortResult = true;
-        }));
+    reloader = ()=>ReloadPage.reloadPage(context, TissueAdd());
+    getRegions();
+    getSorts();
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (sortResult && regionResult) {
+    if (results.values.contains(false) ? false:true) {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black87,
@@ -80,66 +65,8 @@ class TissueAddState extends State<TissueAdd> {
         ),
       );
     } else {
-      return buildLoadingPage();
+      return LoadingPage(reloader, results);
     }
-  }
-
-  startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (result) {
-      setState(() {
-        timer--;
-        if (timer == 0) {
-          result.cancel();
-        }
-      });
-    });
-  }
-
-  buildTryButton() {
-    return ElevatedButton(
-        onPressed: reloadPage,
-        child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
-        style: ElevatedButton.styleFrom(
-          primary: Colors.white, // background
-          onPrimary: Colors.black, // foreground
-        ));
-  }
-
-  reloadPage() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => TissueAdd()));
-  }
-
-  buildLoadingPage(){
-    return Scaffold(
-        body: Center(
-          child: Column(
-            children: <Widget>[
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.3,
-              ),
-              Text(
-                "ChaTho Anatomy",
-                style: TextStyle(fontSize: 50, fontFamily: 'BebasNeue'),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.05,
-              ),
-              SpinKitFoldingCube(
-                color: Colors.black,
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.1,
-              ),
-              timer == 0
-                  ? buildTryButton()
-                  : SizedBox(
-                child: Text("Getting data" + "." * timer,
-                    style: TextStyle(fontFamily: 'BebasNeue')),
-              ),
-            ],
-          ),
-        ));
   }
 
   TextField buildNameField() {
@@ -179,7 +106,6 @@ class TissueAddState extends State<TissueAdd> {
       onChanged: (String newValue) {
         setState(() {
           dropdownRegionValue = newValue;
-          txtRegion.text = newValue;
         });
       },
       items: regions
@@ -213,7 +139,6 @@ class TissueAddState extends State<TissueAdd> {
       onChanged: (String newValue) {
         setState(() {
           dropdownSortValue = newValue;
-          txtSort.text = newValue;
         });
       },
       items: sorts
@@ -247,7 +172,6 @@ class TissueAddState extends State<TissueAdd> {
       onChanged: (String newValue) {
         setState(() {
           dropdownGenderValue = newValue;
-          txtGender.text = newValue;
         });
       },
       items: genders.map<DropdownMenuItem<String>>((String value) {
@@ -282,9 +206,9 @@ class TissueAddState extends State<TissueAdd> {
   Future addTissue() async {
     var addedTissue = new Tissue(
         name: txtName.text,
-        regionId: int.parse(txtRegion.text),
-        sortId: int.parse(txtSort.text),
-        gender: txtGender.text == "" ? null : txtGender.text);
+        regionId: int.parse(dropdownRegionValue),
+        sortId: int.parse(dropdownSortValue),
+        gender: dropdownGenderValue == "" ? null : dropdownGenderValue);
     await TissueApi.addTissue(addedTissue);
     Navigator.pop(context, true);
   }
@@ -297,6 +221,9 @@ class TissueAddState extends State<TissueAdd> {
                 new ListResponseModel.fromJson(jsonMap);
             var list = listResponseModel.dataList;
             regions = list.map((e) => Region.fromJson(e)).toList();
+            setState(() {
+              results["regions"]=true;
+            });
           })
         });
   }
@@ -309,6 +236,9 @@ class TissueAddState extends State<TissueAdd> {
                 new ListResponseModel.fromJson(jsonMap);
             var list = listResponseModel.dataList;
             sorts = list.map((e) => Sort.fromJson(e)).toList();
+            setState(() {
+              results["sorts"]=true;
+            });
           })
         });
   }
