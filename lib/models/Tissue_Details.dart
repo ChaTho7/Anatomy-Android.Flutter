@@ -26,7 +26,7 @@ class TissueDetails {
       "region": region,
       "sort": sort,
       "gender": gender,
-      "origin":origin
+      "origin": origin
     };
   }
 }

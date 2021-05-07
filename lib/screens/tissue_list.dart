@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
+import 'package:ChaTho_Anatomy/screens/abstract/screen.dart';
 import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
 import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
@@ -17,12 +18,14 @@ class TissueList extends StatefulWidget {
   }
 }
 
-class _TissueListState extends State {
+class _TissueListState extends State implements Screen {
 
   List<TissueDetails> tissueDetails;
   Tissue selectedTissue;
   var txtName = TextEditingController();
   Map<String,bool> results={"tissues":false};
+
+  @override
   Function reloader;
 
   @override
@@ -164,4 +167,5 @@ class _TissueListState extends State {
     await Navigator.push(context,
         MaterialPageRoute(builder: (context) => TissueDetail(tissueDetails)));
   }
+
 }

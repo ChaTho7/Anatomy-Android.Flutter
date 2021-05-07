@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class LoadingPage extends StatefulWidget {
-  LoadingPage(this.reloader,this.results);
+  LoadingPage(this.reloader, this.results);
 
   Function reloader;
-  Map<String,bool> results;
+  Map<String, bool> results;
 
   @override
   State<StatefulWidget> createState() {
@@ -16,12 +16,10 @@ class LoadingPage extends StatefulWidget {
   }
 }
 
-class _LoadingPageState extends State<LoadingPage>{
-
+class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     startTimer();
-    reloadPage = widget.reloader;
     super.initState();
   }
 
@@ -31,7 +29,6 @@ class _LoadingPageState extends State<LoadingPage>{
     super.dispose();
   }
 
-  Function reloadPage;
   Timer _timer;
   int timer = Constants.timer;
 
@@ -39,28 +36,28 @@ class _LoadingPageState extends State<LoadingPage>{
   Widget build(BuildContext context) {
     return Scaffold(
         body: Center(
-          child: Column(
-            children: <Widget>[
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.25,
-              ),
-              Image.asset(
-                "assets/images/logo.png",
-                width: MediaQuery.of(context).size.width * 0.85,
-                height: MediaQuery.of(context).size.height * 0.25,
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.1,
-              ),
-              timer == 0
-                  ? buildTryButton()
-                  : SpinKitFoldingCube(
-                color: Colors.black,
-                size: 60,
-              ),
-            ],
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.25,
           ),
-        ));
+          Image.asset(
+            "assets/images/logo.png",
+            width: MediaQuery.of(context).size.width * 0.85,
+            height: MediaQuery.of(context).size.height * 0.25,
+          ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.1,
+          ),
+          timer == 0
+              ? buildTryButton()
+              : SpinKitFoldingCube(
+                  color: Colors.black,
+                  size: 60,
+                ),
+        ],
+      ),
+    ));
   }
 
   startTimer() {
@@ -76,7 +73,7 @@ class _LoadingPageState extends State<LoadingPage>{
 
   buildTryButton() {
     return ElevatedButton(
-        onPressed: ()=>reloadPage.call(),
+        onPressed: () => widget.reloader.call(),
         child: Text("Try again", style: TextStyle(fontFamily: 'BebasNeue')),
         style: ElevatedButton.styleFrom(
           minimumSize: Size(MediaQuery.of(context).size.width * 0.3,
@@ -85,5 +82,4 @@ class _LoadingPageState extends State<LoadingPage>{
           onPrimary: Colors.black, // foreground
         ));
   }
-
 }

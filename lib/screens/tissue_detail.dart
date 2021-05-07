@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:ChaTho_Anatomy/data/api/region_api.dart';
 import 'package:ChaTho_Anatomy/data/api/sort_api.dart';
@@ -13,9 +13,13 @@ import 'package:ChaTho_Anatomy/models/Tissue.dart';
 import 'package:ChaTho_Anatomy/models/TissueImage.dart';
 import 'package:ChaTho_Anatomy/models/Tissue_Details.dart';
 import 'package:ChaTho_Anatomy/models/response_model.dart';
+import 'package:ChaTho_Anatomy/screens/abstract/screen.dart';
 import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
+import 'package:ChaTho_Anatomy/widgets/CarouselSlider.dart';
 import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class TissueDetail extends StatefulWidget {
   TissueDetails tissueDetail;
@@ -30,8 +34,7 @@ class TissueDetail extends StatefulWidget {
 
 enum Options { delete, update }
 
-class _TissueDetailState extends State<TissueDetail> {
-
+class _TissueDetailState extends State<TissueDetail> implements Screen {
   Tissue selectedTissue;
   List<Region> regions;
   List<Sort> sorts;
@@ -43,12 +46,21 @@ class _TissueDetailState extends State<TissueDetail> {
   var dropdownRegionValue;
   var dropdownSortValue;
   var txtName = TextEditingController();
-  Map<String,bool> results={"regions":false,"sorts":false,"tissue":false,"tissueImages":false};
+  Map<String, bool> results = {
+    "regions": false,
+    "sorts": false,
+    "tissue": false,
+    "tissueImages": false
+  };
+  File pickedImage;
+
+  @override
   Function reloader;
 
   @override
   void initState() {
-    reloader = ()=>ReloadPage.reloadPage(context, TissueDetail(widget.tissueDetail));
+    reloader =
+        () => ReloadPage.reloadPage(context, TissueDetail(widget.tissueDetail));
     getSorts();
     getRegions();
     getTissueById(widget.tissueDetail.id);
@@ -58,7 +70,7 @@ class _TissueDetailState extends State<TissueDetail> {
 
   @override
   Widget build(BuildContext context) {
-    if (results.values.contains(false) ? false:true) {
+    if (results.values.contains(false) ? false : true) {
       setValues();
       return Scaffold(
         appBar: AppBar(
@@ -92,7 +104,7 @@ class _TissueDetailState extends State<TissueDetail> {
         body: buildTissueDetail(),
       );
     } else {
-      return LoadingPage(reloader,results);
+      return LoadingPage(reloader, results);
     }
   }
 
@@ -106,10 +118,12 @@ class _TissueDetailState extends State<TissueDetail> {
           buildRegionField(),
           buildGenderField(),
           buildOriginField(),
+          buildAddImageButton(),
           SizedBox(
+            child: pickedImage == null ? SizedBox():IconButton(icon: Icon(Icons.send), onPressed: () {addTissueImages();}),
             height: 30,
           ),
-          buildImagesField(),
+          Carousel.buildTissueImageCarousel(context, tissueImages),
         ],
       ),
     );
@@ -261,19 +275,20 @@ class _TissueDetailState extends State<TissueDetail> {
     );
   }
 
-  buildImagesField() {
-    if (tissueImages[0].image != null) {
-      Uint8List _bytesImage;
-      String _imgString = tissueImages[0].image;
-      _bytesImage = Base64Decoder().convert(_imgString);
-      return SizedBox(
-        child: Image.memory(_bytesImage),
-        height: MediaQuery.of(context).size.height * 0.3,
-        width: MediaQuery.of(context).size.width * 0.9,
-      );
-    } else {
-      return LoadingPage(reloader,results);
-    }
+  buildAddImageButton() {
+    return IconButton(
+      icon: Icon(Icons.image_rounded),
+      color: Colors.black,
+      iconSize: 30,
+      onPressed: getImageFromGallery,
+    );
+  }
+
+  Future getImageFromGallery() async{
+    final image = await  ImagePicker.platform.pickImage(source: ImageSource.gallery, imageQuality: 100);
+    setState(() {
+      pickedImage = File(image.path);
+    });
   }
 
   Future getRegions() async {
@@ -285,7 +300,7 @@ class _TissueDetailState extends State<TissueDetail> {
             var list = listResponseModel.dataList;
             regions = list.map((e) => Region.fromJson(e)).toList();
             setState(() {
-              results["regions"]=true;
+              results["regions"] = true;
             });
           })
         });
@@ -300,7 +315,7 @@ class _TissueDetailState extends State<TissueDetail> {
             var list = listResponseModel.dataList;
             sorts = list.map((e) => Sort.fromJson(e)).toList();
             setState(() {
-              results["sorts"]=true;
+              results["sorts"] = true;
             });
           })
         });
@@ -315,7 +330,7 @@ class _TissueDetailState extends State<TissueDetail> {
             var list = listResponseModel.dataList;
             tissueImages = list.map((e) => TissueImage.fromJson(e)).toList();
             setState(() {
-              results["tissueImages"]=true;
+              results["tissueImages"] = true;
             });
           })
         });
@@ -325,11 +340,23 @@ class _TissueDetailState extends State<TissueDetail> {
     await TissueApi.getTissueById(id).then((response) {
       var jsonMap = json.decode(response.body);
       ResponseModel<Tissue> responseModel =
-      new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
+          new ResponseModel(data: new Tissue.fromJson(jsonMap['data']));
       setState(() {
         selectedTissue = responseModel.data;
-        results["tissue"]=true;
+        results["tissue"] = true;
       });
+    });
+  }
+
+  Future addTissueImages() async{
+    await TissueImageApi.addTissueImages(pickedImage,selectedTissue.id).then((response) {
+      if((response as http.Response).statusCode == 200){
+        var jsonMap = json.decode(response.body);
+        ResponseModel responseModel =
+        new ResponseModel.fromJson(jsonMap);
+      }else{
+        print((response as http.Response).body);
+      }
     });
   }
 
@@ -358,4 +385,5 @@ class _TissueDetailState extends State<TissueDetail> {
       default:
     }
   }
+
 }

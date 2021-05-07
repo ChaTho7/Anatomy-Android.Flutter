@@ -7,6 +7,7 @@ import 'package:ChaTho_Anatomy/models/ListResponseModel.dart';
 import 'package:ChaTho_Anatomy/models/Region.dart';
 import 'package:ChaTho_Anatomy/models/Sort.dart';
 import 'package:ChaTho_Anatomy/models/Tissue.dart';
+import 'package:ChaTho_Anatomy/screens/abstract/screen.dart';
 import 'package:ChaTho_Anatomy/utilities/ReloadPage.dart';
 import 'package:ChaTho_Anatomy/widgets/LoadingPage.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class TissueAdd extends StatefulWidget {
   }
 }
 
-class TissueAddState extends State<TissueAdd> {
+class TissueAddState extends State<TissueAdd> implements Screen{
 
   List<Region> regions;
   List<Sort> sorts;
@@ -28,6 +29,8 @@ class TissueAddState extends State<TissueAdd> {
   var dropdownGenderValue;
   var txtName = TextEditingController();
   Map<String,bool> results={"regions":false,"sorts":false};
+
+  @override
   Function reloader;
 
   @override

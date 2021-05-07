@@ -1,4 +1,4 @@
-class TissueImage{
+class TissueImage {
   int id;
   int tissueId;
   String imagePath;
@@ -6,18 +6,22 @@ class TissueImage{
   String image;
   String guid;
 
-  TissueImage({
-      this.id, this.tissueId, this.imagePath, this.date, this.image, this.guid});
+  TissueImage(
+      {this.id,
+      this.tissueId,
+      this.imagePath,
+      this.date,
+      this.image,
+      this.guid});
 
   factory TissueImage.fromJson(Map<String, dynamic> json) {
     return TissueImage(
-      id: json["id"],
-      tissueId: json["tissueId"],
-      imagePath: json["imagePath"],
-      date: json["date"],
-      image: json["image"],
-      guid: json["guid"]
-    );
+        id: json["id"],
+        tissueId: json["tissueId"],
+        imagePath: json["imagePath"],
+        date: json["date"],
+        image: json["image"],
+        guid: json["guid"]);
   }
 
   Map toJson() {
@@ -29,5 +33,4 @@ class TissueImage{
       "guid": guid
     };
   }
-
 }

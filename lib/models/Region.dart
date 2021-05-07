@@ -5,9 +5,6 @@ class Region {
   Region({this.id, this.name});
 
   factory Region.fromJson(Map<String, dynamic> json) {
-    return Region(
-      id: json["id"],
-      name: json["name"]
-    );
+    return Region(id: json["id"], name: json["name"]);
   }
 }

@@ -1,7 +1,8 @@
+import 'package:ChaTho_Anatomy/constants.dart';
 import 'package:http/http.dart' as http;
 
 class SortApi {
-  static const apiUrl = "http://192.168.1.3:5000/api/sorts/";
+  static const apiUrl = Constants.apiUrl + "sorts/";
 
   static Future getSorts() async {
     var url = Uri.parse(apiUrl + 'getall');
