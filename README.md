@@ -1,4 +1,4 @@
-# Antomy-Android(Flutter)
+# Anatomy-Android(Flutter)
 
 A new Flutter application.
 
